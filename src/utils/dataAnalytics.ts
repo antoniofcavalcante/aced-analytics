@@ -214,3 +214,45 @@ export const getStudentsAtRisk = (
   
   return atRisk;
 };
+
+export const getAllStudents = (
+  grades: StudentGrade[],
+  attendance: StudentAttendance[]
+): Array<{ nome: string; turma: string; mediaGeral: number; presencaGeral: number }> => {
+  const studentMap = new Map<string, { nome: string; turma: string; totalNota: number; countNota: number; totalPresenca: number; countPresenca: number }>();
+  
+  grades.forEach(g => {
+    if (!studentMap.has(g.estudante)) {
+      studentMap.set(g.estudante, {
+        nome: g.estudante,
+        turma: g.turma,
+        totalNota: 0,
+        countNota: 0,
+        totalPresenca: 0,
+        countPresenca: 0,
+      });
+    }
+    const student = studentMap.get(g.estudante)!;
+    if (g.mediaFinal !== null) {
+      student.totalNota += g.mediaFinal;
+      student.countNota += 1;
+    }
+  });
+  
+  attendance.forEach(a => {
+    if (studentMap.has(a.estudante)) {
+      const student = studentMap.get(a.estudante)!;
+      student.totalPresenca += a.percentualPresenca;
+      student.countPresenca += 1;
+    }
+  });
+  
+  return Array.from(studentMap.values())
+    .map(s => ({
+      nome: s.nome,
+      turma: s.turma,
+      mediaGeral: s.countNota > 0 ? Math.round((s.totalNota / s.countNota) * 10) / 10 : 0,
+      presencaGeral: s.countPresenca > 0 ? Math.round((s.totalPresenca / s.countPresenca) * 10) / 10 : 0,
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+};

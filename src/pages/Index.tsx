@@ -6,6 +6,7 @@ import { GradeDistributionChart } from '@/components/GradeDistributionChart';
 import { StudentRankingTable } from '@/components/StudentRankingTable';
 import { StudentDetailModal } from '@/components/StudentDetailModal';
 import { StudentsAtRiskCard } from '@/components/StudentsAtRiskCard';
+import { AllStudentsTable } from '@/components/AllStudentsTable';
 import { StudentGrade, StudentAttendance, StudentData } from '@/types/student';
 import { loadDataFromLocalStorage } from '@/utils/excelParser';
 import {
@@ -16,6 +17,7 @@ import {
   getGradeDistribution,
   getStudentsAtRisk,
   getStudentData,
+  getAllStudents,
 } from '@/utils/dataAnalytics';
 import { GraduationCap } from 'lucide-react';
 
@@ -62,6 +64,7 @@ const Index = () => {
   const topByPresence = getTopStudents(filteredGrades, filteredAttendance, 'presenca', 5);
   const gradeDistribution = getGradeDistribution(filteredGrades);
   const studentsAtRisk = getStudentsAtRisk(filteredGrades, filteredAttendance);
+  const allStudents = getAllStudents(filteredGrades, filteredAttendance);
 
   const handleStudentClick = (studentName: string) => {
     const studentData = getStudentData(studentName, grades, attendance);
@@ -165,6 +168,11 @@ const Index = () => {
             onStudentClick={handleStudentClick}
           />
         </div>
+
+        <AllStudentsTable
+          students={allStudents}
+          onStudentClick={handleStudentClick}
+        />
       </main>
 
       <StudentDetailModal
