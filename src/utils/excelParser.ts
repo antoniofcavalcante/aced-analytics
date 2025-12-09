@@ -45,6 +45,7 @@ export const parseExcelFile = async (file: File): Promise<{
             faltas1Bim: parseValue(row['FALTAS 1º BIMESTRE']),
             faltas2Bim: parseValue(row['FALTAS 2º BIMESTRE']),
             faltas3Bim: parseValue(row['FALTAS 3º BIMESTRE']),
+            faltas4Bim: parseValue(row['FALTAS 4º BIMESTRE']),
             totalAulas: parseValue(row['TOTAL DE AULAS']) || 0,
             totalFaltas: parseValue(row['TOTAL DE FALTAS']) || 0,
             percentualPresenca: parseValue(row['PERCENTUAL DE PRESENÇA']) || 0,

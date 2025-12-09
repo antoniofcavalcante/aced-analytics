@@ -9,6 +9,7 @@ import { StudentsAtRiskCard } from '@/components/StudentsAtRiskCard';
 import { AllStudentsTable } from '@/components/AllStudentsTable';
 import { StudentGrade, StudentAttendance, StudentData } from '@/types/student';
 import { loadDataFromLocalStorage } from '@/utils/excelParser';
+import { generateClassReportPDF } from '@/utils/pdfGenerator';
 import {
   getUniqueClasses,
   getUniqueSubjects,
@@ -20,6 +21,7 @@ import {
   getAllStudents,
 } from '@/utils/dataAnalytics';
 import { GraduationCap } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [grades, setGrades] = useState<StudentGrade[]>([]);
@@ -70,6 +72,35 @@ const Index = () => {
     const studentData = getStudentData(studentName, grades, attendance);
     setSelectedStudent(studentData);
     setIsModalOpen(true);
+  };
+
+  const handleDownloadClassReport = () => {
+    if (selectedClass === 'all' || selectedSubject === 'all') {
+      toast.error('Selecione uma turma e disciplina específica');
+      return;
+    }
+    
+    // Get the first matching stats for the specific class/subject
+    const statsForReport = classStats[0] || {
+      turma: selectedClass,
+      disciplina: selectedSubject,
+      mediaTurma: 0,
+      percentualAprovacaoNotas: 0,
+      percentualAprovacaoPresenca: 0,
+      totalAlunos: filteredGrades.length,
+      alunosAprovadosNota: 0,
+      alunosAprovadosPresenca: 0,
+    };
+    
+    generateClassReportPDF({
+      turma: selectedClass,
+      disciplina: selectedSubject,
+      stats: statsForReport,
+      grades: filteredGrades,
+      attendance: filteredAttendance,
+    });
+    
+    toast.success('Relatório da turma gerado com sucesso!');
   };
 
   if (grades.length === 0) {
@@ -139,6 +170,7 @@ const Index = () => {
           selectedSubject={selectedSubject}
           onClassChange={setSelectedClass}
           onSubjectChange={setSelectedSubject}
+          onDownloadClassReport={handleDownloadClassReport}
         />
 
         <ClassStatsCards stats={classStats} />

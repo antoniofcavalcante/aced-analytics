@@ -20,6 +20,7 @@ export interface StudentAttendance {
   faltas1Bim: number | null;
   faltas2Bim: number | null;
   faltas3Bim: number | null;
+  faltas4Bim: number | null;
   totalAulas: number;
   totalFaltas: number;
   percentualPresenca: number;
