@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Filter, FileDown } from 'lucide-react';
 
 interface FilterPanelProps {
   classes: string[];
@@ -9,6 +10,7 @@ interface FilterPanelProps {
   selectedSubject: string;
   onClassChange: (value: string) => void;
   onSubjectChange: (value: string) => void;
+  onDownloadClassReport?: () => void;
 }
 
 export const FilterPanel = ({
@@ -18,12 +20,28 @@ export const FilterPanel = ({
   selectedSubject,
   onClassChange,
   onSubjectChange,
+  onDownloadClassReport,
 }: FilterPanelProps) => {
+  const canDownloadReport = selectedClass !== 'all' && selectedSubject !== 'all';
+
   return (
     <Card className="p-4 shadow-md">
-      <div className="flex items-center gap-2 mb-4">
-        <Filter className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-lg">Filtros</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Filter className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-lg">Filtros</h3>
+        </div>
+        {canDownloadReport && onDownloadClassReport && (
+          <Button 
+            onClick={onDownloadClassReport}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            Baixar Relatório da Turma
+          </Button>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -61,6 +79,12 @@ export const FilterPanel = ({
           </Select>
         </div>
       </div>
+
+      {!canDownloadReport && (
+        <p className="text-xs text-muted-foreground mt-3">
+          Selecione uma turma e disciplina específica para baixar o relatório em PDF
+        </p>
+      )}
     </Card>
   );
 };
