@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Filter, FileDown } from 'lucide-react';
+import { Filter, FileDown, Loader2 } from 'lucide-react';
 
 interface FilterPanelProps {
   classes: string[];
@@ -11,6 +11,7 @@ interface FilterPanelProps {
   onClassChange: (value: string) => void;
   onSubjectChange: (value: string) => void;
   onDownloadClassReport?: () => void;
+  isGeneratingPDF?: boolean;
 }
 
 export const FilterPanel = ({
@@ -21,6 +22,7 @@ export const FilterPanel = ({
   onClassChange,
   onSubjectChange,
   onDownloadClassReport,
+  isGeneratingPDF = false,
 }: FilterPanelProps) => {
   const canDownloadReport = selectedClass !== 'all' && selectedSubject !== 'all';
 
@@ -37,9 +39,14 @@ export const FilterPanel = ({
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
+            disabled={isGeneratingPDF}
           >
-            <FileDown className="h-4 w-4" />
-            Baixar Relatório da Turma
+            {isGeneratingPDF ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
+            {isGeneratingPDF ? 'Gerando...' : 'Baixar Relatório da Turma'}
           </Button>
         )}
       </div>
