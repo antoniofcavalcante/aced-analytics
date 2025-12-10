@@ -51,3 +51,8 @@ export interface StudentRanking {
   valor: number;
   tipo: 'media' | 'evolucao' | 'presenca';
 }
+
+export interface GradeDistribution {
+  faixa: string;
+  quantidade: number;
+}

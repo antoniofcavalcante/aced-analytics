@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { FilterPanel } from '@/components/FilterPanel';
 import { ClassStatsCards } from '@/components/ClassStatsCards';
@@ -7,6 +7,7 @@ import { StudentRankingTable } from '@/components/StudentRankingTable';
 import { StudentDetailModal } from '@/components/StudentDetailModal';
 import { StudentsAtRiskCard } from '@/components/StudentsAtRiskCard';
 import { AllStudentsTable } from '@/components/AllStudentsTable';
+import { PDFChartsRenderer, PDFChartsRef } from '@/components/PDFChartsRenderer';
 import { StudentGrade, StudentAttendance, StudentData } from '@/types/student';
 import { loadDataFromLocalStorage } from '@/utils/excelParser';
 import { generateClassReportPDF } from '@/utils/pdfGenerator';
@@ -20,7 +21,7 @@ import {
   getStudentData,
   getAllStudents,
 } from '@/utils/dataAnalytics';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -30,6 +31,9 @@ const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
+  const chartsRef = useRef<PDFChartsRef>(null);
 
   useEffect(() => {
     loadData();
@@ -68,39 +72,78 @@ const Index = () => {
   const studentsAtRisk = getStudentsAtRisk(filteredGrades, filteredAttendance);
   const allStudents = getAllStudents(filteredGrades, filteredAttendance);
 
+  // Calculate evolution data for charts
+  const evolutionData = (() => {
+    const bimestres = ['1º Bim', '2º Bim', '3º Bim', '4º Bim'];
+    return bimestres.map((name, index) => {
+      const notas = filteredGrades
+        .map(g => {
+          switch(index) {
+            case 0: return g.nota1Bim;
+            case 1: return g.nota2Bim;
+            case 2: return g.nota3Bim;
+            case 3: return g.nota4Bim;
+            default: return null;
+          }
+        })
+        .filter((n): n is number => n !== null && n !== undefined);
+      
+      const media = notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : 0;
+      return { name, media: parseFloat(media.toFixed(2)) };
+    });
+  })();
+
   const handleStudentClick = (studentName: string) => {
     const studentData = getStudentData(studentName, grades, attendance);
     setSelectedStudent(studentData);
     setIsModalOpen(true);
   };
 
-  const handleDownloadClassReport = () => {
+  const handleDownloadClassReport = async () => {
     if (selectedClass === 'all' || selectedSubject === 'all') {
       toast.error('Selecione uma turma e disciplina específica');
       return;
     }
     
-    // Get the first matching stats for the specific class/subject
-    const statsForReport = classStats[0] || {
-      turma: selectedClass,
-      disciplina: selectedSubject,
-      mediaTurma: 0,
-      percentualAprovacaoNotas: 0,
-      percentualAprovacaoPresenca: 0,
-      totalAlunos: filteredGrades.length,
-      alunosAprovadosNota: 0,
-      alunosAprovadosPresenca: 0,
-    };
+    setIsGeneratingPDF(true);
+    toast.info('Gerando relatório com gráficos...');
     
-    generateClassReportPDF({
-      turma: selectedClass,
-      disciplina: selectedSubject,
-      stats: statsForReport,
-      grades: filteredGrades,
-      attendance: filteredAttendance,
-    });
-    
-    toast.success('Relatório da turma gerado com sucesso!');
+    try {
+      // Wait for charts to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Capture chart images
+      let chartImages;
+      if (chartsRef.current) {
+        chartImages = await chartsRef.current.captureCharts();
+      }
+      
+      const statsForReport = classStats[0] || {
+        turma: selectedClass,
+        disciplina: selectedSubject,
+        mediaTurma: 0,
+        percentualAprovacaoNotas: 0,
+        percentualAprovacaoPresenca: 0,
+        totalAlunos: filteredGrades.length,
+        alunosAprovadosNota: 0,
+        alunosAprovadosPresenca: 0,
+      };
+      
+      generateClassReportPDF({
+        turma: selectedClass,
+        disciplina: selectedSubject,
+        stats: statsForReport,
+        grades: filteredGrades,
+        attendance: filteredAttendance,
+      }, chartImages);
+      
+      toast.success('Relatório profissional gerado com sucesso!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   if (grades.length === 0) {
@@ -131,7 +174,7 @@ const Index = () => {
                 <li>✓ Gráficos interativos de desempenho</li>
                 <li>✓ Rankings de melhores alunos</li>
                 <li>✓ Identificação de alunos em situação de atenção</li>
-                <li>✓ Geração de relatórios em PDF</li>
+                <li>✓ Geração de relatórios em PDF com gráficos</li>
                 <li>✓ Filtros por turma e disciplina</li>
               </ul>
             </div>
@@ -140,6 +183,17 @@ const Index = () => {
       </div>
     );
   }
+
+  const currentStats = classStats[0] || {
+    turma: selectedClass,
+    disciplina: selectedSubject,
+    mediaTurma: 0,
+    percentualAprovacaoNotas: 0,
+    percentualAprovacaoPresenca: 0,
+    totalAlunos: 0,
+    alunosAprovadosNota: 0,
+    alunosAprovadosPresenca: 0,
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,6 +225,7 @@ const Index = () => {
           onClassChange={setSelectedClass}
           onSubjectChange={setSelectedSubject}
           onDownloadClassReport={handleDownloadClassReport}
+          isGeneratingPDF={isGeneratingPDF}
         />
 
         <ClassStatsCards stats={classStats} />
@@ -212,6 +267,16 @@ const Index = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Hidden charts for PDF capture */}
+      {selectedClass !== 'all' && selectedSubject !== 'all' && (
+        <PDFChartsRenderer
+          ref={chartsRef}
+          gradeDistribution={gradeDistribution}
+          classStats={currentStats}
+          evolutionData={evolutionData}
+        />
+      )}
     </div>
   );
 };
