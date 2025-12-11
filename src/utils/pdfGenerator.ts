@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { StudentData, StudentGrade, StudentAttendance, ClassStats } from '@/types/student';
-
+import { PedagogicalIntervention, getPedagogicalInterventions } from './dataAnalytics';
 // Professional color palette
 const COLORS = {
   primary: [30, 64, 175] as [number, number, number],
@@ -437,6 +437,228 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
       }
     }
   });
+  
+  // SEÇÃO DE INTERVENÇÕES PEDAGÓGICAS
+  const interventions = getPedagogicalInterventions(data.grades, data.attendance);
+  
+  if (interventions.length > 0) {
+    doc.addPage();
+    currentY = 20;
+    
+    // Título da seção
+    doc.setFillColor(COLORS.danger[0], COLORS.danger[1], COLORS.danger[2]);
+    doc.rect(0, 0, 210, 25, 'F');
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('📋 PLANO DE INTERVENÇÕES PEDAGÓGICAS', 105, 15, { align: 'center' });
+    
+    currentY = 35;
+    
+    // Resumo das intervenções
+    const altaPrioridade = interventions.filter(i => i.prioridade === 'alta').length;
+    const mediaPrioridade = interventions.filter(i => i.prioridade === 'media').length;
+    const baixaPrioridade = interventions.filter(i => i.prioridade === 'baixa').length;
+    
+    doc.setFillColor(COLORS.light[0], COLORS.light[1], COLORS.light[2]);
+    doc.roundedRect(15, currentY, 180, 25, 3, 3, 'F');
+    
+    doc.setFontSize(10);
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo das Intervenções Necessárias:', 20, currentY + 8);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    
+    // Alta prioridade em vermelho
+    doc.setTextColor(COLORS.danger[0], COLORS.danger[1], COLORS.danger[2]);
+    doc.text(`🔴 Alta Prioridade: ${altaPrioridade} estudantes`, 20, currentY + 17);
+    
+    // Média prioridade em amarelo/laranja
+    doc.setTextColor(COLORS.warning[0], COLORS.warning[1], COLORS.warning[2]);
+    doc.text(`🟡 Média Prioridade: ${mediaPrioridade} estudantes`, 80, currentY + 17);
+    
+    // Baixa prioridade em verde
+    doc.setTextColor(COLORS.success[0], COLORS.success[1], COLORS.success[2]);
+    doc.text(`🟢 Baixa Prioridade: ${baixaPrioridade} estudantes`, 145, currentY + 17);
+    
+    currentY = 70;
+    
+    // Tabela de intervenções de ALTA prioridade
+    if (altaPrioridade > 0) {
+      currentY = addSectionTitle(doc, '🔴 ALTA PRIORIDADE - Ação Imediata Necessária', currentY);
+      
+      const altaInterventions = interventions.filter(i => i.prioridade === 'alta');
+      const altaData = altaInterventions.map(i => [
+        i.estudante,
+        i.tipo,
+        i.indicador,
+        i.sugestaoIntervencao
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        body: altaData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: COLORS.danger,
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: { 
+          fontSize: 7,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: 'bold' },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 85 }
+        },
+        styles: {
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
+        }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+    
+    // Check if need new page
+    if (currentY > 200 && mediaPrioridade > 0) {
+      doc.addPage();
+      currentY = 20;
+    }
+    
+    // Tabela de intervenções de MÉDIA prioridade
+    if (mediaPrioridade > 0) {
+      currentY = addSectionTitle(doc, '🟡 MÉDIA PRIORIDADE - Acompanhamento Necessário', currentY);
+      
+      const mediaInterventions = interventions.filter(i => i.prioridade === 'media');
+      const mediaData = mediaInterventions.map(i => [
+        i.estudante,
+        i.tipo,
+        i.indicador,
+        i.sugestaoIntervencao
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        body: mediaData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: COLORS.warning,
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: { 
+          fontSize: 7,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: 'bold' },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 85 }
+        },
+        styles: {
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
+        }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+    
+    // Check if need new page
+    if (currentY > 200 && baixaPrioridade > 0) {
+      doc.addPage();
+      currentY = 20;
+    }
+    
+    // Tabela de intervenções de BAIXA prioridade
+    if (baixaPrioridade > 0) {
+      currentY = addSectionTitle(doc, '🟢 BAIXA PRIORIDADE - Monitoramento Preventivo', currentY);
+      
+      const baixaInterventions = interventions.filter(i => i.prioridade === 'baixa');
+      const baixaData = baixaInterventions.map(i => [
+        i.estudante,
+        i.tipo,
+        i.indicador,
+        i.sugestaoIntervencao
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        body: baixaData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: COLORS.success,
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: { 
+          fontSize: 7,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: 'bold' },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 85 }
+        },
+        styles: {
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
+        }
+      });
+    }
+    
+    // Adicionar nota sobre uso contínuo
+    doc.addPage();
+    currentY = 20;
+    
+    currentY = addSectionTitle(doc, '📅 Orientações para Acompanhamento Bimestral', currentY);
+    
+    const orientacoes = [
+      ['Periodicidade', 'Este relatório deve ser gerado ao final de cada bimestre para comparação de evolução.'],
+      ['Alta Prioridade', 'Estudantes nesta categoria devem ter reunião com família e plano individual em até 15 dias.'],
+      ['Média Prioridade', 'Monitorar semanalmente e incluir em grupos de reforço. Reavaliar no próximo bimestre.'],
+      ['Baixa Prioridade', 'Acompanhamento mensal. Oferecer atividades de enriquecimento e monitoria.'],
+      ['Registro', 'Documentar todas as intervenções realizadas para histórico do estudante.'],
+      ['Próximo Relatório', 'Comparar indicadores com este relatório para avaliar efetividade das intervenções.'],
+    ];
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Aspecto', 'Orientação']],
+      body: orientacoes,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: COLORS.primary,
+        fontSize: 9,
+        fontStyle: 'bold'
+      },
+      bodyStyles: { 
+        fontSize: 8,
+        cellPadding: 4
+      },
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: 'bold' },
+        1: { cellWidth: 140 }
+      },
+      styles: {
+        overflow: 'linebreak',
+        cellWidth: 'wrap'
+      }
+    });
+  }
   
   addFooter(doc);
   
