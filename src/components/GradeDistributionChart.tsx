@@ -1,14 +1,15 @@
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { GradeDistribution } from '@/types/student';
 
 interface GradeDistributionChartProps {
-  distribution: Record<string, number>;
+  distribution: GradeDistribution[];
 }
 
 export const GradeDistributionChart = ({ distribution }: GradeDistributionChartProps) => {
-  const data = Object.entries(distribution).map(([range, count]) => ({
-    faixa: range,
-    alunos: count,
+  const data = distribution.map(item => ({
+    faixa: item.faixa,
+    alunos: item.quantidade,
   }));
 
   return (

@@ -56,3 +56,4 @@ export interface GradeDistribution {
   faixa: string;
   quantidade: number;
 }
+
