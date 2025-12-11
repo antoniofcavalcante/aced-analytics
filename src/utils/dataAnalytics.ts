@@ -259,3 +259,160 @@ export const getAllStudents = (
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome));
 };
+
+export interface PedagogicalIntervention {
+  estudante: string;
+  turma: string;
+  prioridade: 'alta' | 'media' | 'baixa';
+  tipo: string;
+  descricao: string;
+  indicador: string;
+  sugestaoIntervencao: string;
+  bimestre?: string;
+}
+
+export const getPedagogicalInterventions = (
+  grades: StudentGrade[],
+  attendance: StudentAttendance[]
+): PedagogicalIntervention[] => {
+  const interventions: PedagogicalIntervention[] = [];
+  
+  // Agrupar por estudante
+  const studentGrades = grades.reduce((acc, g) => {
+    if (!acc[g.estudante]) acc[g.estudante] = [];
+    acc[g.estudante].push(g);
+    return acc;
+  }, {} as Record<string, StudentGrade[]>);
+  
+  const studentAttendance = attendance.reduce((acc, a) => {
+    if (!acc[a.estudante]) acc[a.estudante] = [];
+    acc[a.estudante].push(a);
+    return acc;
+  }, {} as Record<string, StudentAttendance[]>);
+  
+  // Analisar cada estudante
+  Object.entries(studentGrades).forEach(([estudante, gradesList]) => {
+    const turma = gradesList[0]?.turma || '';
+    const attList = studentAttendance[estudante] || [];
+    
+    // Calcular média geral e presença geral
+    const validGrades = gradesList.filter(g => g.mediaFinal !== null);
+    const mediaGeral = validGrades.length > 0 
+      ? validGrades.reduce((sum, g) => sum + (g.mediaFinal || 0), 0) / validGrades.length 
+      : 0;
+    
+    const presencaGeral = attList.length > 0
+      ? attList.reduce((sum, a) => sum + a.percentualPresenca, 0) / attList.length
+      : 100;
+    
+    // PRIORIDADE ALTA: Reprovado por nota (< 5.0)
+    if (mediaGeral < 5.0 && mediaGeral > 0) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'alta',
+        tipo: 'Recuperação Intensiva',
+        descricao: 'Estudante com média abaixo do mínimo para aprovação',
+        indicador: `Média: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Plano individualizado de recuperação com aulas de reforço, atividades complementares e acompanhamento semanal. Contato com família para alinhamento.'
+      });
+    }
+    
+    // PRIORIDADE ALTA: Reprovado por presença (< 75%)
+    if (presencaGeral < 75 && presencaGeral > 0) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'alta',
+        tipo: 'Busca Ativa',
+        descricao: 'Estudante com frequência abaixo do mínimo',
+        indicador: `Presença: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Busca ativa imediata, contato com família, visita domiciliar se necessário. Verificar possíveis causas de inassiduidade e encaminhar para rede de apoio.'
+      });
+    }
+    
+    // PRIORIDADE ALTA: Baixa nota E baixa presença
+    if (mediaGeral >= 5.0 && mediaGeral < 6.0 && presencaGeral < 80) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'alta',
+        tipo: 'Acompanhamento Integral',
+        descricao: 'Estudante com desempenho e frequência em risco simultâneo',
+        indicador: `Média: ${mediaGeral.toFixed(1)} | Presença: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Reunião com família urgente, plano de acompanhamento integrado com equipe pedagógica e gestão. Monitoramento diário de frequência e quinzenal de desempenho.'
+      });
+    }
+    
+    // PRIORIDADE MÉDIA: Nota entre 5.0-6.0 (zona de risco)
+    else if (mediaGeral >= 5.0 && mediaGeral < 6.0) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'media',
+        tipo: 'Reforço Pedagógico',
+        descricao: 'Estudante na zona de risco - média próxima ao limite',
+        indicador: `Média: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Incluir em grupos de reforço escolar, atividades de recuperação paralela. Monitorar evolução bimestral e ajustar estratégias conforme necessidade.'
+      });
+    }
+    
+    // PRIORIDADE MÉDIA: Presença entre 75-80%
+    else if (presencaGeral >= 75 && presencaGeral < 80) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'media',
+        tipo: 'Monitoramento de Frequência',
+        descricao: 'Estudante com frequência próxima ao limite',
+        indicador: `Presença: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Acompanhamento semanal de faltas, contato preventivo com família. Identificar padrões de ausência e trabalhar motivação escolar.'
+      });
+    }
+    
+    // PRIORIDADE BAIXA: Nota entre 6.0-7.0 (pode melhorar)
+    else if (mediaGeral >= 6.0 && mediaGeral < 7.0) {
+      interventions.push({
+        estudante,
+        turma,
+        prioridade: 'baixa',
+        tipo: 'Estímulo ao Desenvolvimento',
+        descricao: 'Estudante com potencial de melhoria',
+        indicador: `Média: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Oferecer atividades desafiadoras, monitoria entre pares, participação em projetos. Reconhecer progressos para manter motivação.'
+      });
+    }
+    
+    // Analisar evolução negativa entre bimestres
+    gradesList.forEach(g => {
+      if (g.evolucao1x2 !== null && g.evolucao1x2 < -1.5) {
+        interventions.push({
+          estudante,
+          turma,
+          prioridade: 'media',
+          tipo: 'Queda de Desempenho',
+          descricao: `Queda significativa do 1º para 2º bimestre em ${g.disciplina}`,
+          indicador: `Variação: ${g.evolucao1x2.toFixed(1)} pontos`,
+          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteúdo, problemas pessoais). Reforço específico na disciplina e acompanhamento mais próximo.',
+          bimestre: '1º → 2º Bim'
+        });
+      }
+      if (g.evolucao2x3 !== null && g.evolucao2x3 < -1.5) {
+        interventions.push({
+          estudante,
+          turma,
+          prioridade: 'media',
+          tipo: 'Queda de Desempenho',
+          descricao: `Queda significativa do 2º para 3º bimestre em ${g.disciplina}`,
+          indicador: `Variação: ${g.evolucao2x3.toFixed(1)} pontos`,
+          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteúdo, problemas pessoais). Reforço específico na disciplina e acompanhamento mais próximo.',
+          bimestre: '2º → 3º Bim'
+        });
+      }
+    });
+  });
+  
+  // Ordenar por prioridade
+  const prioridadeOrdem = { alta: 0, media: 1, baixa: 2 };
+  return interventions.sort((a, b) => prioridadeOrdem[a.prioridade] - prioridadeOrdem[b.prioridade]);
+};
