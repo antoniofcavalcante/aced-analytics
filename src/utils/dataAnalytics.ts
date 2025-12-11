@@ -311,62 +311,62 @@ export const getPedagogicalInterventions = (
         estudante,
         turma,
         prioridade: 'alta',
-        tipo: 'Recuperação Intensiva',
-        descricao: 'Estudante com média abaixo do mínimo para aprovação',
-        indicador: `Média: ${mediaGeral.toFixed(1)}`,
-        sugestaoIntervencao: 'Plano individualizado de recuperação com aulas de reforço, atividades complementares e acompanhamento semanal. Contato com família para alinhamento.'
+        tipo: 'Recuperacao Intensiva',
+        descricao: 'Estudante com media abaixo do minimo para aprovacao',
+        indicador: `Media: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Plano individualizado de recuperacao com aulas de reforco, atividades complementares e acompanhamento semanal. Contato com familia para alinhamento.'
       });
     }
     
-    // PRIORIDADE ALTA: Reprovado por presença (< 75%)
+    // PRIORIDADE ALTA: Reprovado por presenca (< 75%)
     if (presencaGeral < 75 && presencaGeral > 0) {
       interventions.push({
         estudante,
         turma,
         prioridade: 'alta',
         tipo: 'Busca Ativa',
-        descricao: 'Estudante com frequência abaixo do mínimo',
-        indicador: `Presença: ${presencaGeral.toFixed(1)}%`,
-        sugestaoIntervencao: 'Busca ativa imediata, contato com família, visita domiciliar se necessário. Verificar possíveis causas de inassiduidade e encaminhar para rede de apoio.'
+        descricao: 'Estudante com frequencia abaixo do minimo',
+        indicador: `Presenca: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Busca ativa imediata, contato com familia, visita domiciliar se necessario. Verificar possiveis causas de inassiduidade e encaminhar para rede de apoio.'
       });
     }
     
-    // PRIORIDADE ALTA: Baixa nota E baixa presença
+    // PRIORIDADE ALTA: Baixa nota E baixa presenca
     if (mediaGeral >= 5.0 && mediaGeral < 6.0 && presencaGeral < 80) {
       interventions.push({
         estudante,
         turma,
         prioridade: 'alta',
         tipo: 'Acompanhamento Integral',
-        descricao: 'Estudante com desempenho e frequência em risco simultâneo',
-        indicador: `Média: ${mediaGeral.toFixed(1)} | Presença: ${presencaGeral.toFixed(1)}%`,
-        sugestaoIntervencao: 'Reunião com família urgente, plano de acompanhamento integrado com equipe pedagógica e gestão. Monitoramento diário de frequência e quinzenal de desempenho.'
+        descricao: 'Estudante com desempenho e frequencia em risco simultaneo',
+        indicador: `Media: ${mediaGeral.toFixed(1)} | Presenca: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Reuniao com familia urgente, plano de acompanhamento integrado com equipe pedagogica e gestao. Monitoramento diario de frequencia e quinzenal de desempenho.'
       });
     }
     
-    // PRIORIDADE MÉDIA: Nota entre 5.0-6.0 (zona de risco)
+    // PRIORIDADE MEDIA: Nota entre 5.0-6.0 (zona de risco)
     else if (mediaGeral >= 5.0 && mediaGeral < 6.0) {
       interventions.push({
         estudante,
         turma,
         prioridade: 'media',
-        tipo: 'Reforço Pedagógico',
-        descricao: 'Estudante na zona de risco - média próxima ao limite',
-        indicador: `Média: ${mediaGeral.toFixed(1)}`,
-        sugestaoIntervencao: 'Incluir em grupos de reforço escolar, atividades de recuperação paralela. Monitorar evolução bimestral e ajustar estratégias conforme necessidade.'
+        tipo: 'Reforco Pedagogico',
+        descricao: 'Estudante na zona de risco - media proxima ao limite',
+        indicador: `Media: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Incluir em grupos de reforco escolar, atividades de recuperacao paralela. Monitorar evolucao bimestral e ajustar estrategias conforme necessidade.'
       });
     }
     
-    // PRIORIDADE MÉDIA: Presença entre 75-80%
+    // PRIORIDADE MEDIA: Presenca entre 75-80%
     else if (presencaGeral >= 75 && presencaGeral < 80) {
       interventions.push({
         estudante,
         turma,
         prioridade: 'media',
-        tipo: 'Monitoramento de Frequência',
-        descricao: 'Estudante com frequência próxima ao limite',
-        indicador: `Presença: ${presencaGeral.toFixed(1)}%`,
-        sugestaoIntervencao: 'Acompanhamento semanal de faltas, contato preventivo com família. Identificar padrões de ausência e trabalhar motivação escolar.'
+        tipo: 'Monitoramento de Frequencia',
+        descricao: 'Estudante com frequencia proxima ao limite',
+        indicador: `Presenca: ${presencaGeral.toFixed(1)}%`,
+        sugestaoIntervencao: 'Acompanhamento semanal de faltas, contato preventivo com familia. Identificar padroes de ausencia e trabalhar motivacao escolar.'
       });
     }
     
@@ -376,14 +376,14 @@ export const getPedagogicalInterventions = (
         estudante,
         turma,
         prioridade: 'baixa',
-        tipo: 'Estímulo ao Desenvolvimento',
+        tipo: 'Estimulo ao Desenvolvimento',
         descricao: 'Estudante com potencial de melhoria',
-        indicador: `Média: ${mediaGeral.toFixed(1)}`,
-        sugestaoIntervencao: 'Oferecer atividades desafiadoras, monitoria entre pares, participação em projetos. Reconhecer progressos para manter motivação.'
+        indicador: `Media: ${mediaGeral.toFixed(1)}`,
+        sugestaoIntervencao: 'Oferecer atividades desafiadoras, monitoria entre pares, participacao em projetos. Reconhecer progressos para manter motivacao.'
       });
     }
     
-    // Analisar evolução negativa entre bimestres
+    // Analisar evolucao negativa entre bimestres
     gradesList.forEach(g => {
       if (g.evolucao1x2 !== null && g.evolucao1x2 < -1.5) {
         interventions.push({
@@ -391,10 +391,10 @@ export const getPedagogicalInterventions = (
           turma,
           prioridade: 'media',
           tipo: 'Queda de Desempenho',
-          descricao: `Queda significativa do 1º para 2º bimestre em ${g.disciplina}`,
-          indicador: `Variação: ${g.evolucao1x2.toFixed(1)} pontos`,
-          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteúdo, problemas pessoais). Reforço específico na disciplina e acompanhamento mais próximo.',
-          bimestre: '1º → 2º Bim'
+          descricao: `Queda significativa do 1o para 2o bimestre em ${g.disciplina}`,
+          indicador: `Variacao: ${g.evolucao1x2.toFixed(1)} pontos`,
+          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteudo, problemas pessoais). Reforco especifico na disciplina e acompanhamento mais proximo.',
+          bimestre: '1o - 2o Bim'
         });
       }
       if (g.evolucao2x3 !== null && g.evolucao2x3 < -1.5) {
@@ -403,10 +403,10 @@ export const getPedagogicalInterventions = (
           turma,
           prioridade: 'media',
           tipo: 'Queda de Desempenho',
-          descricao: `Queda significativa do 2º para 3º bimestre em ${g.disciplina}`,
-          indicador: `Variação: ${g.evolucao2x3.toFixed(1)} pontos`,
-          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteúdo, problemas pessoais). Reforço específico na disciplina e acompanhamento mais próximo.',
-          bimestre: '2º → 3º Bim'
+          descricao: `Queda significativa do 2o para 3o bimestre em ${g.disciplina}`,
+          indicador: `Variacao: ${g.evolucao2x3.toFixed(1)} pontos`,
+          sugestaoIntervencao: 'Investigar causas da queda (dificuldade no conteudo, problemas pessoais). Reforco especifico na disciplina e acompanhamento mais proximo.',
+          bimestre: '2o - 3o Bim'
         });
       }
     });

@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { StudentData, StudentGrade, StudentAttendance, ClassStats } from '@/types/student';
 import { PedagogicalIntervention, getPedagogicalInterventions } from './dataAnalytics';
+
 // Professional color palette
 const COLORS = {
   primary: [30, 64, 175] as [number, number, number],
@@ -14,6 +15,16 @@ const COLORS = {
   light: [243, 244, 246] as [number, number, number],
 };
 
+// Remove emojis and sanitize text for PDF
+const sanitizeText = (text: string): string => {
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Remove misc symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Remove dingbats
+    .replace(/\s+/g, ' ')                    // Normalize spaces
+    .trim();
+};
+
 const addHeader = (doc: jsPDF, title: string, subtitle?: string) => {
   // Header background
   doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
@@ -23,12 +34,12 @@ const addHeader = (doc: jsPDF, title: string, subtitle?: string) => {
   doc.setFontSize(22);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text(title, 105, 18, { align: 'center' });
+  doc.text(sanitizeText(title), 105, 18, { align: 'center' });
   
   if (subtitle) {
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(subtitle, 105, 28, { align: 'center' });
+    doc.text(sanitizeText(subtitle), 105, 28, { align: 'center' });
   }
 };
 
@@ -38,7 +49,7 @@ const addSectionTitle = (doc: jsPDF, title: string, y: number): number => {
   doc.setFontSize(12);
   doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
   doc.setFont('helvetica', 'bold');
-  doc.text(title, 20, y + 2);
+  doc.text(sanitizeText(title), 20, y + 2);
   return y + 12;
 };
 
@@ -90,7 +101,7 @@ export const generateStudentPDF = (studentData: StudentData) => {
   currentY = 75;
   
   // Grades section
-  currentY = addSectionTitle(doc, '📊 Notas e Desempenho Acadêmico', currentY);
+  currentY = addSectionTitle(doc, 'Notas e Desempenho Academico', currentY);
   
   const gradesData = studentData.grades.map(g => [
     g.disciplina,
@@ -138,7 +149,7 @@ export const generateStudentPDF = (studentData: StudentData) => {
   
   // Attendance section
   currentY = (doc as any).lastAutoTable.finalY + 15;
-  currentY = addSectionTitle(doc, '📅 Frequência e Presença', currentY);
+  currentY = addSectionTitle(doc, 'Frequencia e Presenca', currentY);
   
   const attendanceData = studentData.attendance.map(a => [
     a.disciplina,
@@ -250,7 +261,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
   if (chartImages) {
     // Grade Distribution Chart
     if (chartImages.gradeDistribution) {
-      currentY = addSectionTitle(doc, '📊 Distribuição de Notas', currentY);
+      currentY = addSectionTitle(doc, 'Distribuicao de Notas', currentY);
       doc.addImage(chartImages.gradeDistribution, 'PNG', 15, currentY, 180, 75);
       currentY += 85;
     }
@@ -263,7 +274,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     
     // Pie Chart
     if (chartImages.pieChart) {
-      currentY = addSectionTitle(doc, '🎯 Situação de Aprovação', currentY);
+      currentY = addSectionTitle(doc, 'Situacao de Aprovacao', currentY);
       doc.addImage(chartImages.pieChart, 'PNG', 15, currentY, 180, 75);
       currentY += 85;
     }
@@ -276,7 +287,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     
     // Evolution Chart
     if (chartImages.evolutionChart) {
-      currentY = addSectionTitle(doc, '📈 Evolução por Bimestre', currentY);
+      currentY = addSectionTitle(doc, 'Evolucao por Bimestre', currentY);
       doc.addImage(chartImages.evolutionChart, 'PNG', 15, currentY, 180, 75);
       currentY += 85;
     }
@@ -289,14 +300,14 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
   }
   
   // Stats table
-  currentY = addSectionTitle(doc, '📋 Indicadores Detalhados', currentY);
+  currentY = addSectionTitle(doc, 'Indicadores Detalhados', currentY);
   
   const statsData = [
-    ['Média Geral da Turma', data.stats.mediaTurma.toFixed(2)],
+    ['Media Geral da Turma', data.stats.mediaTurma.toFixed(2)],
     ['Alunos Aprovados por Nota', `${data.stats.alunosAprovadosNota} de ${data.stats.totalAlunos} (${data.stats.percentualAprovacaoNotas.toFixed(1)}%)`],
-    ['Alunos Aprovados por Presença', `${data.stats.alunosAprovadosPresenca} de ${data.stats.totalAlunos} (${data.stats.percentualAprovacaoPresenca.toFixed(1)}%)`],
+    ['Alunos Aprovados por Presenca', `${data.stats.alunosAprovadosPresenca} de ${data.stats.totalAlunos} (${data.stats.percentualAprovacaoPresenca.toFixed(1)}%)`],
     ['Alunos Reprovados por Nota', `${data.stats.totalAlunos - data.stats.alunosAprovadosNota} (${(100 - data.stats.percentualAprovacaoNotas).toFixed(1)}%)`],
-    ['Alunos Reprovados por Presença', `${data.stats.totalAlunos - data.stats.alunosAprovadosPresenca} (${(100 - data.stats.percentualAprovacaoPresenca).toFixed(1)}%)`],
+    ['Alunos Reprovados por Presenca', `${data.stats.totalAlunos - data.stats.alunosAprovadosPresenca} (${(100 - data.stats.percentualAprovacaoPresenca).toFixed(1)}%)`],
   ];
   
   autoTable(doc, {
@@ -321,7 +332,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
   currentY = 20;
   
   // Students grades section
-  currentY = addSectionTitle(doc, '📝 Notas dos Alunos', currentY);
+  currentY = addSectionTitle(doc, 'Notas dos Alunos', currentY);
   
   const studentMap = new Map<string, StudentGrade>();
   data.grades.forEach(g => {
@@ -383,7 +394,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
   }
   
   // Students attendance section
-  currentY = addSectionTitle(doc, '📅 Frequência dos Alunos', currentY);
+  currentY = addSectionTitle(doc, 'Frequencia dos Alunos', currentY);
   
   const attendanceMap = new Map<string, StudentAttendance>();
   data.attendance.forEach(a => {
@@ -445,13 +456,13 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     doc.addPage();
     currentY = 20;
     
-    // Título da seção
+    // Titulo da secao
     doc.setFillColor(COLORS.danger[0], COLORS.danger[1], COLORS.danger[2]);
     doc.rect(0, 0, 210, 25, 'F');
     doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.text('📋 PLANO DE INTERVENÇÕES PEDAGÓGICAS', 105, 15, { align: 'center' });
+    doc.text('PLANO DE INTERVENCOES PEDAGOGICAS', 105, 15, { align: 'center' });
     
     currentY = 35;
     
@@ -466,27 +477,27 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     doc.setFontSize(10);
     doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('Resumo das Intervenções Necessárias:', 20, currentY + 8);
+    doc.text('Resumo das Intervencoes Necessarias:', 20, currentY + 8);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     
     // Alta prioridade em vermelho
     doc.setTextColor(COLORS.danger[0], COLORS.danger[1], COLORS.danger[2]);
-    doc.text(`🔴 Alta Prioridade: ${altaPrioridade} estudantes`, 20, currentY + 17);
+    doc.text(`[!] Alta Prioridade: ${altaPrioridade} estudantes`, 20, currentY + 17);
     
-    // Média prioridade em amarelo/laranja
+    // Media prioridade em amarelo/laranja
     doc.setTextColor(COLORS.warning[0], COLORS.warning[1], COLORS.warning[2]);
-    doc.text(`🟡 Média Prioridade: ${mediaPrioridade} estudantes`, 80, currentY + 17);
+    doc.text(`[*] Media Prioridade: ${mediaPrioridade} estudantes`, 75, currentY + 17);
     
     // Baixa prioridade em verde
     doc.setTextColor(COLORS.success[0], COLORS.success[1], COLORS.success[2]);
-    doc.text(`🟢 Baixa Prioridade: ${baixaPrioridade} estudantes`, 145, currentY + 17);
+    doc.text(`[o] Baixa Prioridade: ${baixaPrioridade} estudantes`, 135, currentY + 17);
     
     currentY = 70;
     
     // Tabela de intervenções de ALTA prioridade
     if (altaPrioridade > 0) {
-      currentY = addSectionTitle(doc, '🔴 ALTA PRIORIDADE - Ação Imediata Necessária', currentY);
+      currentY = addSectionTitle(doc, '[!] ALTA PRIORIDADE - Acao Imediata Necessaria', currentY);
       
       const altaInterventions = interventions.filter(i => i.prioridade === 'alta');
       const altaData = altaInterventions.map(i => [
@@ -498,7 +509,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
       
       autoTable(doc, {
         startY: currentY,
-        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervencao Sugerida']],
         body: altaData,
         theme: 'striped',
         headStyles: { 
@@ -534,7 +545,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     
     // Tabela de intervenções de MÉDIA prioridade
     if (mediaPrioridade > 0) {
-      currentY = addSectionTitle(doc, '🟡 MÉDIA PRIORIDADE - Acompanhamento Necessário', currentY);
+      currentY = addSectionTitle(doc, '[*] MEDIA PRIORIDADE - Acompanhamento Necessario', currentY);
       
       const mediaInterventions = interventions.filter(i => i.prioridade === 'media');
       const mediaData = mediaInterventions.map(i => [
@@ -546,7 +557,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
       
       autoTable(doc, {
         startY: currentY,
-        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervencao Sugerida']],
         body: mediaData,
         theme: 'striped',
         headStyles: { 
@@ -582,7 +593,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     
     // Tabela de intervenções de BAIXA prioridade
     if (baixaPrioridade > 0) {
-      currentY = addSectionTitle(doc, '🟢 BAIXA PRIORIDADE - Monitoramento Preventivo', currentY);
+      currentY = addSectionTitle(doc, '[o] BAIXA PRIORIDADE - Monitoramento Preventivo', currentY);
       
       const baixaInterventions = interventions.filter(i => i.prioridade === 'baixa');
       const baixaData = baixaInterventions.map(i => [
@@ -594,7 +605,7 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
       
       autoTable(doc, {
         startY: currentY,
-        head: [['Estudante', 'Tipo', 'Indicador', 'Intervenção Sugerida']],
+        head: [['Estudante', 'Tipo', 'Indicador', 'Intervencao Sugerida']],
         body: baixaData,
         theme: 'striped',
         headStyles: { 
@@ -624,20 +635,20 @@ export const generateClassReportPDF = (data: ClassReportData, chartImages?: Char
     doc.addPage();
     currentY = 20;
     
-    currentY = addSectionTitle(doc, '📅 Orientações para Acompanhamento Bimestral', currentY);
+    currentY = addSectionTitle(doc, 'Orientacoes para Acompanhamento Bimestral', currentY);
     
     const orientacoes = [
-      ['Periodicidade', 'Este relatório deve ser gerado ao final de cada bimestre para comparação de evolução.'],
-      ['Alta Prioridade', 'Estudantes nesta categoria devem ter reunião com família e plano individual em até 15 dias.'],
-      ['Média Prioridade', 'Monitorar semanalmente e incluir em grupos de reforço. Reavaliar no próximo bimestre.'],
+      ['Periodicidade', 'Este relatorio deve ser gerado ao final de cada bimestre para comparacao de evolucao.'],
+      ['Alta Prioridade', 'Estudantes nesta categoria devem ter reuniao com familia e plano individual em ate 15 dias.'],
+      ['Media Prioridade', 'Monitorar semanalmente e incluir em grupos de reforco. Reavaliar no proximo bimestre.'],
       ['Baixa Prioridade', 'Acompanhamento mensal. Oferecer atividades de enriquecimento e monitoria.'],
-      ['Registro', 'Documentar todas as intervenções realizadas para histórico do estudante.'],
-      ['Próximo Relatório', 'Comparar indicadores com este relatório para avaliar efetividade das intervenções.'],
+      ['Registro', 'Documentar todas as intervencoes realizadas para historico do estudante.'],
+      ['Proximo Relatorio', 'Comparar indicadores com este relatorio para avaliar efetividade das intervencoes.'],
     ];
     
     autoTable(doc, {
       startY: currentY,
-      head: [['Aspecto', 'Orientação']],
+      head: [['Aspecto', 'Orientacao']],
       body: orientacoes,
       theme: 'striped',
       headStyles: { 
