@@ -1,4 +1,4 @@
-import { StudentGrade, StudentAttendance, ClassStats, StudentRanking, StudentData } from '@/types/student';
+import { StudentGrade, StudentAttendance, ClassStats, StudentRanking, StudentData, GradeDistribution } from '@/types/student';
 
 export const getUniqueClasses = (grades: StudentGrade[]): string[] => {
   return [...new Set(grades.map(g => g.turma))].sort();
@@ -155,8 +155,8 @@ export const getStudentData = (
   };
 };
 
-export const getGradeDistribution = (grades: StudentGrade[]): Record<string, number> => {
-  const distribution = {
+export const getGradeDistribution = (grades: StudentGrade[]): GradeDistribution[] => {
+  const distribution: Record<string, number> = {
     '< 5.0': 0,
     '5.0 - 6.0': 0,
     '6.0 - 7.0': 0,
@@ -177,7 +177,10 @@ export const getGradeDistribution = (grades: StudentGrade[]): Record<string, num
     else distribution['9.0 - 10.0']++;
   });
   
-  return distribution;
+  return Object.entries(distribution).map(([faixa, quantidade]) => ({
+    faixa,
+    quantidade,
+  }));
 };
 
 export const getStudentsAtRisk = (
